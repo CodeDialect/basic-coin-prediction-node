@@ -3,8 +3,9 @@ import pickle
 from zipfile import ZipFile
 from datetime import datetime
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.linear_model import LinearRegression, Ridge
+from sklearn.preprocessing import StandardScaler
 from updater import download_binance_monthly_data, download_binance_daily_data
 from config import data_base_path, model_file_path
 
@@ -88,12 +89,17 @@ def train_model():
     y = df["price"].values.reshape(-1, 1)
 
     # Split the data into training set and test set
-    x_train, _, y_train, _ = train_test_split(x, y, test_size=0.2, random_state=0)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+    print("Begin Training the model")
+    # Scale the data
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train)
+    x_test_scaled = scaler.transform(x_test)
 
     # Train the model
-    model = LinearRegression()
-    model.fit(x_train, y_train)
-
+    model = Ridge()
+    model.fit(x_train_scaled, y_train)
+    print("Training Complete")
     # create the model's parent directory if it doesn't exist
     os.makedirs(os.path.dirname(model_file_path), exist_ok=True)
 
